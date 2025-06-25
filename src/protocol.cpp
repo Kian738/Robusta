@@ -33,7 +33,7 @@ void Protocol::sendPacket(PacketType type, const byte *payload, byte payloadLeng
   packet[i++] = length;                  // Length of the packet (excluding magic bytes, length, and checksum)
   packet[i++] = static_cast<byte>(type); // Packet type
 
-  // Todo: The whole payload shall be encrypted. The call shall be generated via Deffie-Hellman key exchange
+  // Todo: The whole payload shall be encrypted. The call shall be generated via Deffie-Hellman key exchange <-- That would allow anybody to access the payload...
   if (payload && payloadLength > 0)
     memcpy(packet + i, payload, payloadLength); // Copy the payload into the packet
   i += payloadLength;

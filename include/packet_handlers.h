@@ -15,8 +15,10 @@ struct PacketHandler
 void handleVerifyResult(const byte *payload, byte length);
 void handleSetDebug(const byte *payload, byte length);
 void handleFlushLog(const byte *payload, byte length);
+void handleOpenRegister(const byte *payload, byte length);
 
 constexpr PacketHandler handlers[] PROGMEM = {
     {PacketType::VERIFY_RESULT, handleVerifyResult},
     {PacketType::SET_DEBUG, handleSetDebug},
-    {PacketType::FLUSH_LOG, handleFlushLog}};
+    {PacketType::FLUSH_LOG, handleFlushLog},
+    {PacketType::OPEN_REGISTER, handleOpenRegister}};

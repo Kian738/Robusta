@@ -18,9 +18,7 @@ void handleVerifyResult(const byte *payload, byte length)
   }
 
   Logger::print("Tag verification successful.");
-  Gpio::beep();
-
-  Gpio::openRegister();
+  handleOpenRegister(nullptr, 0);
 };
 
 void handleSetDebug(const byte *payload, byte length)
@@ -28,7 +26,7 @@ void handleSetDebug(const byte *payload, byte length)
   if (length != 1)
     return;
 
-  debugMode = (bool)payload[0];
+  debugMode = payload[0] == 0x01;
   Logger::print("Enabled debug mode."); // This will only print if debugMode is true
 };
 
@@ -39,4 +37,13 @@ void handleFlushLog(const byte *payload, byte length)
 
   Logger::flush();
   Logger::print("Log flushed.");
+};
+
+void handleOpenRegister(const byte *payload, byte length)
+{
+  if (length != 0)
+    return;
+
+  Gpio::beep();
+  Gpio::openRegister();
 };

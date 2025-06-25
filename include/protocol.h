@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-// Todo: Packet to enable tag registration mode
+// Todo: Packet to enable tag registration mode <-- We don't need to implement anything for this on Robusta
 enum class PacketType : byte
 {
   VERIFY_UID = 0x01, // Verify the UID of a tag
@@ -12,6 +12,7 @@ enum class PacketType : byte
   STATUS,            // Status packet
   LOG,               // Log packet
   FLUSH_LOG,         // Flush the log buffer
+  OPEN_REGISTER,     // Open the register (for example, to dispense a product)
 };
 
 class Protocol
