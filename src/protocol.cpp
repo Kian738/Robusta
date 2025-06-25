@@ -1,0 +1,120 @@
+#include "protocol.h"
+
+#include "packet_handlers.h"
+#include "logger.h"
+
+Protocol::ParseState Protocol::parseState = Protocol::ParseState::WAIT_HI; // The packet section (byte) we are waiting for
+
+byte Protocol::seq = 1;         // Current sequence number for the out packet
+byte Protocol::expectedSeq = 1; // Expected sequence number for the next received packet
+
+byte Protocol::packetLength = 0;                               // Length of the current packet
+byte Protocol::packetBuffer[Protocol::MAX_PAYLOAD_SIZE] = {0}; // Buffer for the packet body
+byte Protocol::packetIndex = 0;                                // Current index in the packet body
+
+void Protocol::handleIncomingSerial()
+{
+  while (Serial.available())
+    parseByte(Serial.read());
+}
+
+void Protocol::sendPacket(PacketType type, const byte *payload, byte payloadLength)
+{
+  if (payloadLength > MAX_PAYLOAD_SIZE)
+  {
+    Logger::print("Error: Payload length exceeds maximum size.");
+    return;
+  }
+
+  byte length = payloadLength + 2;   // 1 byte for sequence, 1 byte for type
+  byte packet[MAX_PAYLOAD_SIZE + 6]; // 2 bytes for magic, 1 byte for length, 1 byte for sequence, 1 byte for type, 64 bytes for payload, and 1 byte for checksum
+
+  byte i = 0;
+
+  packet[i++] = MAGIC_HI; // Magic high byte
+  packet[i++] = MAGIC_LO; // Magic low byte
+  packet[i++] = length;   // Length of the packet (excluding magic bytes, length, and checksum)
+
+  packet[i++] = seq++; // Sequence number for the packet
+  if (seq == 0)
+    seq = 1;                             // Reset sequence number to 1 if it overflows
+  packet[i++] = static_cast<byte>(type); // Packet type
+
+  // Todo: The whole payload shall be encrypted. The call shall be generated via Deffie-Hellman key exchange
+  if (payload && payloadLength > 0)
+    memcpy(packet + i, payload, payloadLength); // Copy the payload into the packet
+  i += payloadLength;
+
+  packet[i++] = calculateChecksum(packet, payloadLength + 3); // Checksum, includes magic bytes (2), length  (1), [sequence, type, and payload]
+
+  Serial.write(packet, i); // Send the packet over Serial
+}
+
+void Protocol::parseByte(byte b)
+{
+  switch (parseState)
+  {
+  case ParseState::WAIT_HI:
+    if (b == MAGIC_HI)
+      parseState = ParseState::WAIT_LO;
+    break;
+
+  case ParseState::WAIT_LO:
+    parseState = b == MAGIC_LO ? ParseState::READ_LENGTH : ParseState::WAIT_HI;
+    break;
+
+  case ParseState::READ_LENGTH:
+    if (b < 2 || b >= MAX_PAYLOAD_SIZE)
+    {
+      parseState = ParseState::WAIT_HI; // Invalid length, reset
+      return;
+    }
+    packetLength = b;
+    packetIndex = 0;
+    parseState = ParseState::READ_BODY;
+    break;
+
+  case ParseState::READ_BODY:
+    packetBuffer[packetIndex++] = b;
+    if (packetIndex > packetLength)
+    {
+      if (calculateChecksum(packetBuffer, packetLength) == packetBuffer[packetLength])
+        handlePacket(packetBuffer, packetLength);
+      parseState = ParseState::WAIT_HI; // Reset to wait for the next packet
+    }
+  default:
+    break;
+  }
+}
+
+void Protocol::handlePacket(const byte *data, byte length)
+{
+  auto receivedSeq = data[0];
+  auto type = static_cast<PacketType>(data[1]);
+
+  auto payload = data + 2;
+  auto payloadLength = length - 2; // 1 byte for sequence, 1 byte for type
+
+  if (receivedSeq != expectedSeq++)
+  {
+    Logger::print("Warning: Unexpected sequence number. Expected: ");
+    Logger::printLn(expectedSeq - 1);
+    return;
+  }
+
+  for (auto &handler : handlers)
+    if ((PacketType)pgm_read_byte(&handler.type) == type)
+    {
+      auto fn = (HandlerFn)pgm_read_word(&handler.fn);
+      fn(payload, payloadLength);
+      break;
+    }
+}
+
+byte Protocol::calculateChecksum(const byte *data, size_t length)
+{
+  uint16_t sum = 0;
+  for (byte i = 0; i < length; ++i)
+    sum += data[i];
+  return byte(sum & 0xFF);
+}
