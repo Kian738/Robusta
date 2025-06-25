@@ -74,32 +74,23 @@ void print(const char *message)
   }
 }
 
-// Method for printing a number to the log
 template <typename T>
-void log(T number, byte base = 10)
+void print(T number, byte base = 10)
 {
   if (!debugMode)
     return;
 
   char buffer[sizeof(T) * 3 + 1];
-  switch (base)
+  switch (base) // Todo: Add support for binary and octal
   {
-  default:
-    snprintf(buffer, sizeof(buffer), "%d", number);
-    break;
-  case 2:
-    snprintf(buffer, sizeof(buffer), "0b");
-    for (int i = sizeof(T) * 8 - 1; i >= 0; --i)
-    {
-      buffer[2 + (sizeof(T) * 8 - 1 - i)] = (number & (1 << i)) ? '1' : '0';
-    }
-    buffer[2 + sizeof(T) * 8] = '\0';
-    break;
-  case 8:
-    snprintf(buffer, sizeof(buffer), "0%o", number);
+  case 10: // Decimal
+    itoa(number, buffer, 10);
     break;
   case 16:
-    snprintf(buffer, sizeof(buffer), "0x%02X", number);
+    buffer = "0123456789ABCDEF"[number & 16];
+    break;
+  default:
+    print("Warning: Unsupported base for printing number.");
     break;
   }
 
@@ -109,14 +100,14 @@ void log(T number, byte base = 10)
 void printLn(const char *message = "")
 {
   print(message);
-  sendPacket(PacketType::LOG, "\n", 0);
+  sendPacket(PacketType::LOG, (const byte *)"\n", 1); // Send a newline character
 }
 
 void initMFRC522()
 {
   SPI.begin();
   mfrc522.PCD_Init();
-  Serial.println("MFRC522 initialized.");
+  print("MFRC522 initialized.");
 }
 
 void playStartupChord()
@@ -340,7 +331,7 @@ void loop()
   {
     if (mfrc522.uid.uidByte[i] < 0x10)
       print("0");
-    log(mfrc522.uid.uidByte[i], HEX);
+    print(mfrc522.uid.uidByte[i], HEX);
   }
   printLn();
 
