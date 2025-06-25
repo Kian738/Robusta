@@ -59,7 +59,7 @@ constexpr PacketHandler handlers[] PROGMEM = {
 
 bool debugMode = true; // Debug mode flag
 
-byte logIndex = 0;                    // Current index in the log buffer
+byte logIndex = 0;               // Current index in the log buffer
 char logBuffer[LOG_BUFFER_SIZE]; // Buffer for log messages
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
