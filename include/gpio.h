@@ -14,4 +14,6 @@ public:
   static void beep();
   static void playStartupChord();
   static void playErrorChord();
+
+  static void openRegister();
 };

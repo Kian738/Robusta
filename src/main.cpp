@@ -1,5 +1,5 @@
-#include "protocol.h"
 #include "logger.h"
+#include "protocol.h"
 #include "nfc_reader.h"
 #include "gpio.h"
 #include "heartbeat_manager.h"

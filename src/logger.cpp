@@ -3,6 +3,9 @@
 #include "config.h"
 #include "protocol.h"
 
+byte Logger::logIndex = 0;                       // Current index in the log buffer
+char Logger::logBuffer[Logger::LOG_BUFFER_SIZE]; // Buffer for log messages
+
 void Logger::print(const char *message)
 {
   if (!debugMode)
@@ -17,7 +20,7 @@ void Logger::print(const char *message)
   }
 }
 
-void Logger::print(int number, byte base = DEC)
+void Logger::print(int number, byte base)
 {
   if (!debugMode)
     return;
@@ -56,7 +59,7 @@ void Logger::printLn(const char *message)
   newLine();
 }
 
-void Logger::printLn(int number, byte base = 10)
+void Logger::printLn(int number, byte base)
 {
   print(number, base);
   newLine();

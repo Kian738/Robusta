@@ -8,8 +8,8 @@ class Logger
 private:
   static constexpr size_t LOG_BUFFER_SIZE = 128;
 
-  static inline byte logIndex = 0;                     // Current index in the log buffer
-  static inline char logBuffer[LOG_BUFFER_SIZE] = {0}; // Buffer for log messages
+  static byte logIndex;
+  static char logBuffer[LOG_BUFFER_SIZE];
 
 public:
   static void print(const char *message);

@@ -5,10 +5,6 @@
 #include "gpio.h"
 #include "logger.h"
 
-#include <MFRC522.h>
-
-MFRC522 mfrc522(SS_PIN, RST_PIN);
-
 void handleVerifyResult(const byte *payload, byte length)
 {
   if (length != 1)
@@ -22,15 +18,9 @@ void handleVerifyResult(const byte *payload, byte length)
   }
 
   Logger::print("Tag verification successful.");
+  Gpio::beep();
 
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(100);
-  digitalWrite(BUZZER_PIN, LOW);
-
-  // Register the tag
-  digitalWrite(REGISTER_PIN, HIGH);
-  delay(100);
-  digitalWrite(REGISTER_PIN, LOW);
+  Gpio::openRegister();
 };
 
 void handleSetDebug(const byte *payload, byte length)

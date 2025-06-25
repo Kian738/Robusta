@@ -15,9 +15,10 @@ void Gpio::init()
 
 void Gpio::beep()
 {
-  tone(BUZZER_PIN, 1000, 100); // Beep at 1kHz for 100ms
+  digitalWrite(BUZZER_PIN, HIGH);
   delay(100);
-  noTone(BUZZER_PIN); // Stop the tone
+  digitalWrite(BUZZER_PIN, LOW);
+
   Logger::print("Buzzer beeped.");
 }
 
@@ -50,4 +51,13 @@ void Gpio::playErrorChord()
   }
 
   Logger::print("Error sound played.");
+}
+
+void Gpio::openRegister()
+{
+  digitalWrite(REGISTER_PIN, HIGH);
+  delay(100);
+  digitalWrite(REGISTER_PIN, LOW);
+
+  Logger::print("Register opened.");
 }
