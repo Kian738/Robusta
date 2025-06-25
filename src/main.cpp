@@ -80,21 +80,10 @@ void print(T number, byte base = 10)
   if (!debugMode)
     return;
 
-  char buffer[sizeof(T) * 3 + 1];
-  switch (base) // Todo: Add support for binary and octal
-  {
-  case 10: // Decimal
-    itoa(number, buffer, 10);
-    break;
-  case 16:
-    buffer = "0123456789ABCDEF"[number & 16];
-    break;
-  default:
-    print("Warning: Unsupported base for printing number.");
-    break;
-  }
+  char buffer[20]; // Buffer to hold the string representation of the number
+  itoa(number, buffer, base);
 
-  print(buffer);
+  print(buffer, strlen(buffer));
 }
 
 void printLn(const char *message = "")
