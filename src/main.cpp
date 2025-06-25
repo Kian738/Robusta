@@ -35,9 +35,13 @@ enum class PacketType : byte
   SET_DEBUG,         // Set debug mode
   STATUS,            // Status packet
   LOG,               // Log packet
+  FLUSH_LOG,         // Flush the log buffer
 };
 
-bool debugMode = false; // Debug mode flag
+bool debugMode = true; // Debug mode flag
+
+byte logIndex = 0;                    // Current index in the log buffer
+char logBuffer[2 * MAX_PAYLOAD_SIZE]; // Buffer for log messages
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
@@ -55,41 +59,83 @@ unsigned long lastActivity = 0;
 
 void sendPacket(PacketType type, const byte *payload = nullptr, byte payloadLength = 0);
 
+void flushLog()
+{
+  if (logIndex == 0)
+    return; // Nothing to flush
+
+  size_t sent = 0;
+  while (sent < logIndex)
+  {
+    auto chunkSize = (logIndex - sent) > MAX_PAYLOAD_SIZE ? MAX_PAYLOAD_SIZE : (logIndex - sent);
+    sendPacket(PacketType::LOG,
+               reinterpret_cast<const byte *>(logBuffer + sent),
+               chunkSize);
+
+    sent += chunkSize;
+  }
+
+  logIndex = 0; // Reset the log index after flushing
+}
+
 // Todo: Make this take VA_ARGS
 void print(const char *message)
 {
   if (!debugMode)
     return;
 
-  auto length = strlen(message);
-  while (length > 0)
+  while (*message)
   {
-    auto chunkSize = length > MAX_PAYLOAD_SIZE ? MAX_PAYLOAD_SIZE : length;
-    sendPacket(PacketType::LOG,
-               reinterpret_cast<const byte *>(message),
-               chunkSize);
+    if (logIndex >= sizeof(logBuffer) - 1)
+      flushLog(); // Flush the log if it is full
 
-    message += chunkSize;
-    length -= chunkSize;
+    logBuffer[logIndex++] = *message++;
   }
 }
 
-template <typename T>
-void print(T number, byte base = 10)
+void print(long number, byte base = DEC)
 {
   if (!debugMode)
     return;
 
-  char buffer[20]; // Buffer to hold the string representation of the number
-  itoa(number, buffer, base);
+  char buffer[32] = {0};
 
-  print(buffer, strlen(buffer));
+  if (base == 10)
+    ltoa(number, buffer, 10);
+  else if (base == 16)
+  {
+    ltoa(number, buffer, 16);
+    for (char *p = buffer; *p; p++)
+      *p = toupper(*p);
+  }
+  else
+    snprintf(buffer, sizeof(buffer), "Invalid base: %u", base);
+
+  print(buffer);
 }
 
-void printLn(const char *message = "")
+void newLine()
+{
+  if (!debugMode)
+    return;
+
+  if (logIndex >= sizeof(logBuffer) - 1)
+    flushLog();
+
+  logBuffer[logIndex++] = '\n';
+  flushLog();
+}
+
+void printLn(const char *message)
 {
   print(message);
-  sendPacket(PacketType::LOG, (const byte *)"\n", 1); // Send a newline character
+  newLine();
+}
+
+void printLn(int number, byte base = 10)
+{
+  print(number, base);
+  newLine();
 }
 
 void initMFRC522()
@@ -175,8 +221,8 @@ void sendPacket(PacketType type, const byte *payload, byte payloadLength)
   packet[i++] = length;   // Length of the packet (excluding magic bytes, length, and checksum)
 
   packet[i++] = seq++; // Sequence number for the packet
-  if (seq > 255)
-    seq = 1;
+  if (seq == 0)
+    seq = 1;                             // Reset sequence number to 1 if it overflows
   packet[i++] = static_cast<byte>(type); // Packet type
 
   // Todo: The whole payload shall be encrypted. The call shall be generated via Deffie-Hellman key exchange
@@ -200,7 +246,7 @@ void handlePacket(const byte *data, byte length)
   if (receivedSeq != expectedSeq++)
   {
     print("Warning: Unexpected sequence number. Expected: ");
-    log(expectedSeq - 1);
+    printLn(expectedSeq - 1);
     return;
   }
 
@@ -236,6 +282,11 @@ void handlePacket(const byte *data, byte length)
 
     debugMode = (bool)payload[0];
     print("Debug mode: On");
+    break;
+
+  case PacketType::FLUSH_LOG:
+    flushLog();
+    print("Log flushed.");
     break;
 
   default:
@@ -322,7 +373,7 @@ void loop()
       print("0");
     print(mfrc522.uid.uidByte[i], HEX);
   }
-  printLn();
+  newLine();
 
   sendPacket(PacketType::VERIFY_UID, mfrc522.uid.uidByte, mfrc522.uid.size);
 
