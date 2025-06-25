@@ -46,47 +46,9 @@ struct PacketHandler
   HandlerFn fn;
 };
 
-void handleVerifyResult(const byte *payload, byte length)
-{
-  if (length != 1)
-    return; // Invalid payload length
-
-  if (payload[0] != 0x01)
-  {
-    print("Tag verification failed.");
-    playErrorChord();
-    return;
-  }
-
-  print("Tag verification successful.");
-
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(100);
-  digitalWrite(BUZZER_PIN, LOW);
-
-  // Register the tag
-  digitalWrite(REGISTER_PIN, HIGH);
-  delay(1000);
-  digitalWrite(REGISTER_PIN, LOW);
-};
-
-void handleSetDebug(const byte *payload, byte length)
-{
-  if (length != 1)
-    return;
-
-  debugMode = (bool)payload[0];
-  print("Enabled debug mode."); // This will only print if debugMode is true
-};
-
-void handleFlushLog(const byte *payload, byte length)
-{
-  if (length != 0)
-    return;
-
-  flushLog();
-  print("Log flushed.");
-};
+void handleVerifyResult(const byte *payload, byte length);
+void handleSetDebug(const byte *payload, byte length);
+void handleFlushLog(const byte *payload, byte length);
 
 constexpr PacketHandler handlers[] PROGMEM = {
     {PacketType::VERIFY_RESULT, handleVerifyResult},
@@ -309,10 +271,52 @@ void handlePacket(const byte *data, byte length)
     if ((PacketType)pgm_read_byte(&handler.type) == type)
     {
       auto fn = (HandlerFn)pgm_read_word(&handler.fn);
-      fn(payload, length);
+      fn(payload, payloadLength);
       break;
     }
 }
+
+void handleVerifyResult(const byte *payload, byte length)
+{
+  if (length != 1)
+    return; // Invalid payload length
+
+  if (payload[0] != 0x01)
+  {
+    print("Tag verification failed.");
+    playErrorChord();
+    return;
+  }
+
+  print("Tag verification successful.");
+
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(100);
+  digitalWrite(BUZZER_PIN, LOW);
+
+  // Register the tag
+  digitalWrite(REGISTER_PIN, HIGH);
+  delay(1000);
+  digitalWrite(REGISTER_PIN, LOW);
+};
+
+void handleSetDebug(const byte *payload, byte length)
+{
+  if (length != 1)
+    return;
+
+  debugMode = (bool)payload[0];
+  print("Enabled debug mode."); // This will only print if debugMode is true
+};
+
+void handleFlushLog(const byte *payload, byte length)
+{
+  if (length != 0)
+    return;
+
+  flushLog();
+  print("Log flushed.");
+};
 
 void parseByte(byte b)
 {
