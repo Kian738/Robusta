@@ -34,6 +34,7 @@ enum class PacketType : byte
   HEARTBEAT,         // Heartbeat packet to check if the device is active
   SET_DEBUG,         // Set debug mode
   STATUS,            // Status packet
+  LOG,               // Log packet
 };
 
 bool debugMode = false; // Debug mode flag
@@ -43,6 +44,7 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 auto parseState = ParseState::WAIT_HI; // The packet section (byte) we are waiting for
 byte seq = 1;                          // Current sequence number for the packet
 byte expectedSeq = 1;                  // Expected sequence number for the next packet
+// Todo: Implement the reliable packet delivery with sequence numbers
 
 byte packetLength = 0;               // Length of the current packet
 byte packetBuffer[MAX_PAYLOAD_SIZE]; // Buffer for the packet body
@@ -51,7 +53,64 @@ byte packetIndex = 0;                // Current index in the packet body
 unsigned long lastHeartbeat = 0;
 unsigned long lastActivity = 0;
 
-// Todo: Create a Log method that uses our Serial protocol with reliability
+void sendPacket(PacketType type, const byte *payload = nullptr, byte payloadLength = 0);
+
+// Todo: Make this take VA_ARGS
+void print(const char *message)
+{
+  if (!debugMode)
+    return;
+
+  auto length = strlen(message);
+  while (length > 0)
+  {
+    auto chunkSize = length > MAX_PAYLOAD_SIZE ? MAX_PAYLOAD_SIZE : length;
+    sendPacket(PacketType::LOG,
+               reinterpret_cast<const byte *>(message),
+               chunkSize);
+
+    message += chunkSize;
+    length -= chunkSize;
+  }
+}
+
+// Method for printing a number to the log
+template <typename T>
+void log(T number, byte base = 10)
+{
+  if (!debugMode)
+    return;
+
+  char buffer[sizeof(T) * 3 + 1];
+  switch (base)
+  {
+  default:
+    snprintf(buffer, sizeof(buffer), "%d", number);
+    break;
+  case 2:
+    snprintf(buffer, sizeof(buffer), "0b");
+    for (int i = sizeof(T) * 8 - 1; i >= 0; --i)
+    {
+      buffer[2 + (sizeof(T) * 8 - 1 - i)] = (number & (1 << i)) ? '1' : '0';
+    }
+    buffer[2 + sizeof(T) * 8] = '\0';
+    break;
+  case 8:
+    snprintf(buffer, sizeof(buffer), "0%o", number);
+    break;
+  case 16:
+    snprintf(buffer, sizeof(buffer), "0x%02X", number);
+    break;
+  }
+
+  print(buffer);
+}
+
+void printLn(const char *message = "")
+{
+  print(message);
+  sendPacket(PacketType::LOG, "\n", 0);
+}
 
 void initMFRC522()
 {
@@ -76,7 +135,7 @@ void playStartupChord()
   delay(100);
   noTone(BUZZER_PIN);
 
-  Serial.println("Startup sound played.");
+  print("Startup sound played.");
 }
 
 void playErrorChord()
@@ -90,7 +149,7 @@ void playErrorChord()
     delay(noteDuration);
   }
 
-  Serial.println("Error sound played.");
+  print("Error sound played.");
 }
 
 void setup()
@@ -100,13 +159,13 @@ void setup()
   while (!Serial)
     ;
 
-  Serial.println("Starting MFRC522...");
+  print("Starting MFRC522...");
   initMFRC522();
 
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(REGISTER_PIN, OUTPUT);
 
-  Serial.println("Playing startup chord...");
+  print("Playing startup chord...");
   playStartupChord();
 }
 
@@ -122,7 +181,7 @@ void sendPacket(PacketType type, const byte *payload, byte payloadLength)
 {
   if (payloadLength > MAX_PAYLOAD_SIZE)
   {
-    Serial.println("Error: Payload length exceeds maximum size.");
+    print("Error: Payload length exceeds maximum size.");
     return;
   }
 
@@ -160,8 +219,8 @@ void handlePacket(const byte *data, byte length)
 
   if (receivedSeq != expectedSeq++)
   {
-    Serial.print("Warning: Unexpected sequence number. Expected: ");
-    Serial.print(expectedSeq - 1);
+    print("Warning: Unexpected sequence number. Expected: ");
+    log(expectedSeq - 1);
     return;
   }
 
@@ -173,7 +232,7 @@ void handlePacket(const byte *data, byte length)
     if (payload[0] == 0x01)
     {
       // Todo: Implement a packet struct where we can pass a function to handle the packet
-      Serial.println("Tag verification successful.");
+      print("Tag verification successful.");
 
       digitalWrite(BUZZER_PIN, HIGH);
       delay(100);
@@ -186,7 +245,7 @@ void handlePacket(const byte *data, byte length)
     }
     else
     {
-      Serial.println("Tag verification failed.");
+      print("Tag verification failed.");
       playErrorChord();
     }
     break;
@@ -196,8 +255,7 @@ void handlePacket(const byte *data, byte length)
       return;
 
     debugMode = (bool)payload[0];
-    Serial.print("Debug mode set to: ");
-    Serial.println(debugMode ? "ON" : "OFF"); // Todo: Just hardcode the goddamn ON
+    print("Debug mode: On");
     break;
 
   default:
@@ -255,7 +313,7 @@ void SendHbIfNeeded()
 
   if (millis() - lastHeartbeat > hbInterval)
   {
-    sendPacket(PacketType::HEARTBEAT, nullptr, 0);
+    sendPacket(PacketType::HEARTBEAT);
     lastHeartbeat = millis();
   }
 }
@@ -277,14 +335,14 @@ void loop()
   if (!checkForTag())
     return;
 
-  Serial.print("Read UID tag: 0x");
+  print("Read UID tag: 0x");
   for (byte i = 0; i < mfrc522.uid.size; i++)
   {
     if (mfrc522.uid.uidByte[i] < 0x10)
-      Serial.print("0");
-    Serial.print(mfrc522.uid.uidByte[i], HEX);
+      print("0");
+    log(mfrc522.uid.uidByte[i], HEX);
   }
-  Serial.println();
+  printLn();
 
   sendPacket(PacketType::VERIFY_UID, mfrc522.uid.uidByte, mfrc522.uid.size);
 
