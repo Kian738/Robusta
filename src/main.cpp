@@ -12,7 +12,7 @@ constexpr unsigned long INACTIVITY_TIMEOUT = 600000; // 10 minutes
 constexpr byte RST_PIN = 9;
 constexpr byte SS_PIN = 10;
 constexpr byte BUZZER_PIN = 5;
-constexpr byte REGISTER_PIN = 6;
+constexpr byte REGISTER_PIN = 4;
 
 constexpr uint8_t MAGIC_HI = 0x52; // 'R'
 constexpr uint8_t MAGIC_LO = 0x4F; // 'O'
@@ -166,19 +166,17 @@ void initMFRC522()
 
 void playStartupChord()
 {
-  const int notes[] = {262, 330, 392, 494}; // C4, E4, G4, B4 (Cmaj7)
-  const int noteDuration = 150;
+  tone(BUZZER_PIN, 523, 100); // C5
+  delay(175);
 
-  for (int i = 0; i < 4; i++)
+  const int notes[] = {440, 349, 659}; // A4, F4, E5
+  const int noteDuration = 120;
+
+  for (byte i = 0; i < 3; i++)
   {
     tone(BUZZER_PIN, notes[i], noteDuration);
     delay(noteDuration);
   }
-
-  // Small pause and a final high note G5 ping
-  tone(BUZZER_PIN, 784, 100);
-  delay(100);
-  noTone(BUZZER_PIN);
 
   print("Startup sound played.");
 }
@@ -188,7 +186,7 @@ void playErrorChord()
   const int notes[] = {440, 349, 440, 523}; // A4, F4, A4, C5
   const int noteDuration = 100;
 
-  for (int i = 0; i < 4; i++)
+  for (byte i = 0; i < 4; i++)
   {
     tone(BUZZER_PIN, notes[i], noteDuration);
     delay(noteDuration);
@@ -298,7 +296,7 @@ void handleVerifyResult(const byte *payload, byte length)
 
   // Register the tag
   digitalWrite(REGISTER_PIN, HIGH);
-  delay(1000);
+  delay(100);
   digitalWrite(REGISTER_PIN, LOW);
 };
 
