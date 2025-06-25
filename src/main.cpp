@@ -147,7 +147,7 @@ void sendPacket(PacketType type, const byte *payload, byte payloadLength)
 
   packet[i++] = calculateChecksum(packet, payloadLength + 3); // Checksum, includes magic bytes (2), length  (1), [sequence, type, and payload]
 
-  Serial.write(packet, packetLength + i); // Send the packet over Serial
+  Serial.write(packet, i); // Send the packet over Serial
 }
 
 void handlePacket(const byte *data, byte length)
