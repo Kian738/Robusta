@@ -93,7 +93,7 @@ void print(const char *message)
   }
 }
 
-void print(long number, byte base = DEC)
+void print(int number, byte base = DEC)
 {
   if (!debugMode)
     return;
