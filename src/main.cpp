@@ -18,6 +18,8 @@ constexpr uint8_t MAGIC_HI = 0x52; // 'R'
 constexpr uint8_t MAGIC_LO = 0x4F; // 'O'
 constexpr size_t MAX_PAYLOAD_SIZE = 64;
 
+constexpr size_t LOG_BUFFER_SIZE = 128;
+
 enum class ParseState : byte
 {
   WAIT_HI,
@@ -58,7 +60,7 @@ constexpr PacketHandler handlers[] PROGMEM = {
 bool debugMode = true; // Debug mode flag
 
 byte logIndex = 0;                    // Current index in the log buffer
-char logBuffer[2 * MAX_PAYLOAD_SIZE]; // Buffer for log messages
+char logBuffer[LOG_BUFFER_SIZE]; // Buffer for log messages
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
