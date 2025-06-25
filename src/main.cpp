@@ -14,8 +14,8 @@ constexpr byte SS_PIN = 10;
 constexpr byte BUZZER_PIN = 5;
 constexpr byte REGISTER_PIN = 6;
 
-constexpr uint8_t MAGIC_HI = 0x4B; // 'K'
-constexpr uint8_t MAGIC_LO = 0x4E; // 'N'
+constexpr uint8_t MAGIC_HI = 0x52; // 'R'
+constexpr uint8_t MAGIC_LO = 0x4F; // 'O'
 constexpr size_t MAX_PAYLOAD_SIZE = 64;
 
 enum class ParseState : byte
