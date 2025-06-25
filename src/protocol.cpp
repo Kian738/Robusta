@@ -5,9 +5,6 @@
 
 Protocol::ParseState Protocol::parseState = Protocol::ParseState::WAIT_HI; // The packet section (byte) we are waiting for
 
-byte Protocol::seq = 1;         // Current sequence number for the out packet
-byte Protocol::expectedSeq = 1; // Expected sequence number for the next received packet
-
 byte Protocol::packetLength = 0;                               // Length of the current packet
 byte Protocol::packetBuffer[Protocol::MAX_PAYLOAD_SIZE] = {0}; // Buffer for the packet body
 byte Protocol::packetIndex = 0;                                // Current index in the packet body
@@ -26,18 +23,14 @@ void Protocol::sendPacket(PacketType type, const byte *payload, byte payloadLeng
     return;
   }
 
-  byte length = payloadLength + 2;   // 1 byte for sequence, 1 byte for type
-  byte packet[MAX_PAYLOAD_SIZE + 6]; // 2 bytes for magic, 1 byte for length, 1 byte for sequence, 1 byte for type, 64 bytes for payload, and 1 byte for checksum
+  byte length = payloadLength + 1;   // 1 byte for type
+  byte packet[MAX_PAYLOAD_SIZE + 5]; // 2 bytes for magic, 1 byte for length, 1 byte for type, 64 bytes for payload, and 1 byte for checksum
 
   byte i = 0;
 
-  packet[i++] = MAGIC_HI; // Magic high byte
-  packet[i++] = MAGIC_LO; // Magic low byte
-  packet[i++] = length;   // Length of the packet (excluding magic bytes, length, and checksum)
-
-  packet[i++] = seq++; // Sequence number for the packet
-  if (seq == 0)
-    seq = 1;                             // Reset sequence number to 1 if it overflows
+  packet[i++] = MAGIC_HI;                // Magic high byte
+  packet[i++] = MAGIC_LO;                // Magic low byte
+  packet[i++] = length;                  // Length of the packet (excluding magic bytes, length, and checksum)
   packet[i++] = static_cast<byte>(type); // Packet type
 
   // Todo: The whole payload shall be encrypted. The call shall be generated via Deffie-Hellman key exchange
@@ -45,7 +38,7 @@ void Protocol::sendPacket(PacketType type, const byte *payload, byte payloadLeng
     memcpy(packet + i, payload, payloadLength); // Copy the payload into the packet
   i += payloadLength;
 
-  packet[i++] = calculateChecksum(packet, payloadLength + 3); // Checksum, includes magic bytes (2), length  (1), [sequence, type, and payload]
+  packet[i++] = calculateChecksum(packet, payloadLength + 3); // Checksum, includes magic bytes (2), length  (1), [type, and payload]
 
   Serial.write(packet, i); // Send the packet over Serial
 }
@@ -89,18 +82,10 @@ void Protocol::parseByte(byte b)
 
 void Protocol::handlePacket(const byte *data, byte length)
 {
-  auto receivedSeq = data[0];
-  auto type = static_cast<PacketType>(data[1]);
+  auto type = static_cast<PacketType>(data[0]);
 
-  auto payload = data + 2;
-  auto payloadLength = length - 2; // 1 byte for sequence, 1 byte for type
-
-  if (receivedSeq != expectedSeq++)
-  {
-    Logger::print("Warning: Unexpected sequence number. Expected: ");
-    Logger::printLn(expectedSeq - 1);
-    return;
-  }
+  auto payload = data + 1;
+  auto payloadLength = length - 1; // 1 byte for type
 
   for (auto &handler : handlers)
     if ((PacketType)pgm_read_byte(&handler.type) == type)
@@ -116,5 +101,6 @@ byte Protocol::calculateChecksum(const byte *data, size_t length)
   uint16_t sum = 0;
   for (byte i = 0; i < length; ++i)
     sum += data[i];
+
   return byte(sum & 0xFF);
 }

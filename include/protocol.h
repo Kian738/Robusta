@@ -33,10 +33,6 @@ private:
 
   static ParseState parseState;
 
-  // Todo: Implement the reliable packet delivery with sequence numbers
-  static byte seq;
-  static byte expectedSeq;
-
   static byte packetLength;
   static byte packetBuffer[MAX_PAYLOAD_SIZE];
   static byte packetIndex;
