@@ -281,7 +281,7 @@ void handlePacket(const byte *data, byte length)
       return;
 
     debugMode = (bool)payload[0];
-    print("Debug mode: On");
+    print("Debug mode: On"); // This will only print if debugMode is true
     break;
 
   case PacketType::FLUSH_LOG:
