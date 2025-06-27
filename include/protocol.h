@@ -9,7 +9,6 @@ enum class PacketType : byte
   VERIFY_RESULT,     // Result of the verification
   HEARTBEAT,         // Heartbeat packet to check if the device is active
   SET_DEBUG,         // Set debug mode
-  STATUS,            // Status packet
   LOG,               // Log packet
   FLUSH_LOG,         // Flush the log buffer
   OPEN_REGISTER,     // Open the register (for example, to dispense a product)
