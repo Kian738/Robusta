@@ -14,5 +14,6 @@ private:
 
   friend class NfcReader; // Allow Protocol access to lastActivity
 public:
-  static void SendIfNeeded();
+  static void updateActivity() { lastActivity = millis(); }
+  static void sendIfNeeded();
 };

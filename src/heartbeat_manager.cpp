@@ -5,7 +5,7 @@
 unsigned long HeartbeatManager::lastHeartbeat = 0;
 unsigned long HeartbeatManager::lastActivity = 0;
 
-void HeartbeatManager::SendIfNeeded()
+void HeartbeatManager::sendIfNeeded()
 {
   bool active = millis() - lastActivity < INACTIVITY_TIMEOUT;
   auto interval = active ? ACTIVE_HEARTBEAT : IDLE_HEARTBEAT;
@@ -13,6 +13,6 @@ void HeartbeatManager::SendIfNeeded()
   if (millis() - lastHeartbeat > interval)
   {
     Protocol::sendPacket(PacketType::HEARTBEAT);
-    lastHeartbeat = millis();
+    updateActivity();
   }
 }

@@ -22,12 +22,14 @@ void setup()
 
   Logger::print("Playing startup chord...");
   Gpio::playStartupChord();
+
+  HeartbeatManager::updateActivity();
 }
 
 void loop()
 {
   Protocol::handleIncomingSerial();
-  HeartbeatManager::SendIfNeeded();
+  HeartbeatManager::sendIfNeeded();
 
   if (!NfcReader::checkForTag())
     return;
