@@ -10,7 +10,7 @@ void Gpio::init()
   digitalWrite(BUZZER_PIN, LOW);   // Ensure buzzer is off
   digitalWrite(REGISTER_PIN, LOW); // Ensure register pin is low
 
-  Logger::print("GPIO initialized.");
+  Logger::printLn("GPIO initialized.");
 }
 
 void Gpio::beep()
@@ -19,7 +19,7 @@ void Gpio::beep()
   delay(100);
   digitalWrite(BUZZER_PIN, LOW);
 
-  Logger::print("Buzzer beeped.");
+  Logger::printLn("Buzzer beeped.");
 }
 
 void Gpio::playStartupChord()
@@ -36,7 +36,7 @@ void Gpio::playStartupChord()
     delay(noteDuration);
   }
 
-  Logger::print("Startup sound played.");
+  Logger::printLn("Startup sound played.");
 }
 
 void Gpio::playErrorChord()
@@ -50,7 +50,7 @@ void Gpio::playErrorChord()
     delay(noteDuration);
   }
 
-  Logger::print("Error sound played.");
+  Logger::printLn("Error sound played.");
 }
 
 void Gpio::openRegister()
@@ -59,5 +59,5 @@ void Gpio::openRegister()
   delay(100);
   digitalWrite(REGISTER_PIN, LOW);
 
-  Logger::print("Register opened.");
+  Logger::printLn("Register opened.");
 }

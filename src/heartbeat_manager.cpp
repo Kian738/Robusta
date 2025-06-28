@@ -7,12 +7,12 @@ unsigned long HeartbeatManager::lastActivity = 0;
 
 void HeartbeatManager::sendIfNeeded()
 {
-  bool active = millis() - lastActivity < INACTIVITY_TIMEOUT;
+  bool active = lastActivity && millis() - lastActivity < INACTIVITY_TIMEOUT;
   auto interval = active ? ACTIVE_HEARTBEAT : IDLE_HEARTBEAT;
 
   if (millis() - lastHeartbeat > interval)
   {
     Protocol::sendPacket(PacketType::HEARTBEAT);
-    updateActivity();
+    lastHeartbeat = millis();
   }
 }

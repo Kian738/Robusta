@@ -15,7 +15,7 @@ void NfcReader::init()
   mfrc522.PCD_Init();
   mfrc522.PCD_SetAntennaGain(MFRC522::PCD_RxGain::RxGain_max); // ! Todo: Remove
 
-  Logger::print("NFC Reader initialized.");
+  Logger::printLn("NFC Reader initialized.");
 }
 
 bool NfcReader::checkForTag()
@@ -32,5 +32,5 @@ void NfcReader::cleanUp()
   mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();
 
-  Logger::print("Tag cleaned up.");
+  Logger::printLn("Tag cleaned up.");
 }

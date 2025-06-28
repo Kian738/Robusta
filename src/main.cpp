@@ -15,15 +15,15 @@ void setup()
   while (!Serial)
     ;
 
-  Logger::print("Starting NFC Reader...");
+  Protocol::sendPacket(PacketType::HEARTBEAT);
+
+  Logger::printLn("Starting NFC Reader...");
   NfcReader::init();
 
   Gpio::init();
 
-  Logger::print("Playing startup chord...");
+  Logger::printLn("Playing startup chord...");
   Gpio::playStartupChord();
-
-  HeartbeatManager::updateActivity();
 }
 
 void loop()

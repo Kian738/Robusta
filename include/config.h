@@ -4,5 +4,5 @@
 
 namespace
 {
-  bool debugMode = false; // Can be set via the SET_DEBUG packet
+  bool debugMode = true; // Can be set via the SET_DEBUG packet
 }

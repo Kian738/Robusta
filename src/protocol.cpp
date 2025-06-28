@@ -19,7 +19,7 @@ void Protocol::sendPacket(PacketType type, const byte *payload, byte payloadLeng
 {
   if (payloadLength > MAX_PAYLOAD_SIZE)
   {
-    Logger::print("Error: Payload length exceeds maximum size.");
+    Logger::printLn("Error: Payload length exceeds maximum size.");
     return;
   }
 
