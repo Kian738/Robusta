@@ -30,15 +30,6 @@ void handleSetDebug(const byte *payload, byte length)
   Logger::printLn("Enabled debug mode."); // This will only print if debugMode is true
 };
 
-void handleFlushLog(const byte *payload, byte length)
-{
-  if (length != 0)
-    return;
-
-  Logger::flush();
-  Logger::printLn("Log flushed.");
-};
-
 void handleOpenRegister(const byte *payload, byte length)
 {
   if (length != 0)

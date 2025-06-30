@@ -1,14 +1,21 @@
 #include "gpio.h"
 
 #include "logger.h"
+#include "protocol.h"
+
+Gpio::RegisterState Gpio::currentState = Gpio::RegisterState::CLOSED;
+bool Gpio::lastPhysicalState = false;
 
 void Gpio::init()
 {
   pinMode(BUZZER_PIN, OUTPUT);
-  pinMode(REGISTER_PIN, OUTPUT);
+  pinMode(REGISTER_OPEN_PIN, OUTPUT);
+  pinMode(REGISTER_STATUS_PIN, INPUT_PULLUP);
 
-  digitalWrite(BUZZER_PIN, LOW);   // Ensure buzzer is off
-  digitalWrite(REGISTER_PIN, LOW); // Ensure register pin is low
+  digitalWrite(BUZZER_PIN, LOW);        // Ensure buzzer is off
+  digitalWrite(REGISTER_OPEN_PIN, LOW); // Ensure register pin is low
+
+  checkRegisterState(); // Send the initial state of the register
 
   Logger::printLn("GPIO initialized.");
 }
@@ -53,11 +60,51 @@ void Gpio::playErrorChord()
   Logger::printLn("Error sound played.");
 }
 
+bool Gpio::checkRegisterState()
+{
+  auto physicalState = isRegisterOpen();
+  auto stateChanged = physicalState != lastPhysicalState;
+
+  if (stateChanged)
+  {
+    Logger::print("Physical register state changed: ");
+    Logger::printLn(physicalState ? "OPEN" : "CLOSED");
+
+    currentState = physicalState
+                       ? currentState == RegisterState::OPENING_COMMANDED
+                             ? RegisterState::OPENED_BY_COMMAND
+                             : RegisterState::OPENED_EXTERNALLY
+                       : RegisterState::CLOSED;
+
+    if (currentState != RegisterState::OPENED_BY_COMMAND) // We will never have the state OPENING_COMMANDED here
+    {
+      auto payload = static_cast<byte>(currentState);
+      Protocol::sendPacket(PacketType::REGISTER_STATE, &payload, 1);
+    }
+
+    lastPhysicalState = physicalState;
+  }
+  else if (currentState == RegisterState::OPENING_COMMANDED && millis() % 1000 == 0)
+  {
+    Logger::printLn("Warning: Register didn't open after command");
+    currentState = RegisterState::CLOSED;
+  }
+
+  return stateChanged;
+}
+
 void Gpio::openRegister()
 {
-  digitalWrite(REGISTER_PIN, HIGH);
+  currentState = RegisterState::OPENING_COMMANDED;
+
+  digitalWrite(REGISTER_OPEN_PIN, HIGH);
   delay(100);
-  digitalWrite(REGISTER_PIN, LOW);
+  digitalWrite(REGISTER_OPEN_PIN, LOW);
 
   Logger::printLn("Register opened.");
+}
+
+bool Gpio::isRegisterOpen()
+{
+  return digitalRead(REGISTER_STATUS_PIN) == LOW;
 }

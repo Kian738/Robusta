@@ -5,13 +5,13 @@
 // Todo: Packet to enable tag registration mode <-- We don't need to implement anything for this on Robusta
 enum class PacketType : byte
 {
-  VERIFY_UID = 0x01, // Verify the UID of a tag
-  VERIFY_RESULT,     // Result of the verification
-  HEARTBEAT,         // Heartbeat packet to check if the device is active
-  SET_DEBUG,         // Set debug mode
-  LOG,               // Log packet
-  FLUSH_LOG,         // Flush the log buffer
-  OPEN_REGISTER,     // Open the register (for example, to dispense a product)
+  VERIFY_UID = 0x01, // C -> S | Verify the UID of a tag
+  VERIFY_RESULT,     // S -> C | Result of the verification
+  HEARTBEAT,         // C -> S | Heartbeat packet to check if the device is active
+  SET_DEBUG,         // S -> C | Set debug mode
+  LOG,               // C -> S | Log packet
+  OPEN_REGISTER,     // S -> C | Open the register (for example, to dispense a product)
+  REGISTER_STATE     // C -> S | State of the register (e.g. open or closed)
 };
 
 class Protocol

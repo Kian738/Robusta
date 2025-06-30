@@ -31,6 +31,8 @@ void loop()
   Protocol::handleIncomingSerial();
   HeartbeatManager::sendIfNeeded();
 
+  Gpio::checkRegisterState(); // Todo: Don't send when we initiate the open
+
   if (!NfcReader::checkForTag())
     return;
 
