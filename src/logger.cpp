@@ -1,6 +1,6 @@
 #include "logger.h"
 
-#include "config.h"
+#include "connection_manager.h"
 #include "protocol.h"
 
 byte Logger::logIndex = 0;                       // Current index in the log buffer
@@ -8,7 +8,7 @@ char Logger::logBuffer[Logger::LOG_BUFFER_SIZE]; // Buffer for log messages
 
 void Logger::print(const char *message)
 {
-  if (!debugMode)
+  if (!ConnectionManager::isDebugMode())
     return;
 
   while (*message)
@@ -22,7 +22,7 @@ void Logger::print(const char *message)
 
 void Logger::print(int number, byte base)
 {
-  if (!debugMode)
+  if (!ConnectionManager::isDebugMode())
     return;
 
   char buffer[32] = {0};
@@ -43,7 +43,7 @@ void Logger::print(int number, byte base)
 
 void Logger::newLine()
 {
-  if (!debugMode)
+  if (!ConnectionManager::isDebugMode())
     return;
 
   if (logIndex >= sizeof(logBuffer) - 1)

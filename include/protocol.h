@@ -5,15 +5,17 @@
 // Todo: Packet to enable tag registration mode <-- We don't need to implement anything for this on Robusta
 enum class PacketType : byte
 {
-  START = 0x01,      // S -> C | Initial packet to start communication
-  HELLO,             // C -> S | Hello packet to establish connection
-  VERIFY_UID,        // C -> S | Verify the UID of a tag
-  VERIFY_RESULT,     // S -> C | Result of the verification
-  HEARTBEAT,         // C -> S | Heartbeat packet to check if the device is active
-  SET_DEBUG,         // S -> C | Set debug mode
-  LOG,               // C -> S | Log packet
-  OPEN_REGISTER,     // S -> C | Open the register (for example, to dispense a product)
-  REGISTER_STATE     // C -> S | State of the register (e.g. open or closed)
+  AVAILABLE = 0x01, // C -> S | Present ourself to the server
+  CONNECT_REQUEST,  // S -> C | Start the connection, can contain debug mode
+  CONNECT_RESPONSE, // C -> S | Acknowledge the connection request, provide register state
+  VERIFY_REQUEST,   // C -> S | Verify the UID of a tag
+  VERIFY_RESPONSE,  // S -> C | Result of the verification
+  HEARTBEAT,        // C -> S | Heartbeat packet to check if the device is active
+  HEARTBEAT_ACK,    // S -> C | Acknowledge heartbeat packet
+  SET_DEBUG,        // S -> C | Set debug mode
+  LOG,              // C -> S | Log packet
+  OPEN_REGISTER,    // S -> C | Open the register (for example, to dispense a product)
+  REGISTER_STATE    // C -> S | State of the register (e.g. open or closed)
 };
 
 class Protocol

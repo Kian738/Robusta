@@ -3,10 +3,14 @@
 #include "nfc_reader.h"
 #include "gpio.h"
 #include "heartbeat_manager.h"
+#include "connection_manager.h"
 
 #include <Arduino.h>
 
 constexpr unsigned long BAUD_RATE = 115200;
+constexpr unsigned long AVAILABLE_INTERVAL = 1000;
+
+static unsigned long lastAvailablePacket = 0;
 
 void setup()
 {
@@ -14,20 +18,23 @@ void setup()
 
   while (!Serial)
     ;
-
-  Logger::printLn("Starting NFC Reader...");
-  NfcReader::init();
-
-  Gpio::init();
-
-  Logger::printLn("Playing startup chord...");
-  Gpio::playStartupChord();
 }
 
 void loop()
 {
   Protocol::handleIncomingSerial();
-  HeartbeatManager::sendIfNeeded();
+
+  if (!ConnectionManager::isConnected())
+  {
+    if ((unsigned long)(millis() - lastAvailablePacket) > AVAILABLE_INTERVAL)
+    {
+      Protocol::sendPacket(PacketType::AVAILABLE);
+      lastAvailablePacket = millis();
+    }
+    return; // Wait for connection
+  }
+
+  HeartbeatManager::checkAndSendHeartbeat();
 
   Gpio::checkRegisterState();
 
@@ -44,7 +51,7 @@ void loop()
   }
   Logger::newLine();
 
-  Protocol::sendPacket(PacketType::VERIFY_UID, uid.uidByte, uid.size);
+  Protocol::sendPacket(PacketType::VERIFY_REQUEST, uid.uidByte, uid.size);
 
   NfcReader::cleanUp();
 }

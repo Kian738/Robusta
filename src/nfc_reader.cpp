@@ -1,6 +1,5 @@
 #include "nfc_reader.h"
 
-#include "config.h"
 #include "logger.h"
 #include "heartbeat_manager.h"
 

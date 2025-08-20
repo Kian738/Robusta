@@ -1,6 +1,7 @@
 #include "protocol.h"
 
 #include "packet_handlers.h"
+#include "connection_manager.h"
 #include "logger.h"
 
 Protocol::ParseState Protocol::parseState = Protocol::ParseState::WAIT_HI; // The packet section (byte) we are waiting for
@@ -23,8 +24,8 @@ void Protocol::sendPacket(PacketType type, const byte *payload, byte payloadLeng
     return;
   }
 
-  byte length = payloadLength + 1;   // 1 byte for type
-  byte packet[MAX_PAYLOAD_SIZE + 5]; // 2 bytes for magic, 1 byte for length, 1 byte for type, 64 bytes for payload, and 1 byte for checksum
+  const byte length = payloadLength + 1; // 1 byte for type
+  byte packet[MAX_PAYLOAD_SIZE + 5];     // 2 bytes for magic, 1 byte for length, 1 byte for type, 64 bytes for payload, and 1 byte for checksum
 
   byte i = 0;
 
@@ -82,12 +83,20 @@ void Protocol::parseByte(byte b)
 
 void Protocol::handlePacket(const byte *data, byte length)
 {
-  auto type = static_cast<PacketType>(data[0]);
+  const auto type = static_cast<PacketType>(data[0]);
 
-  auto payload = data + 1;
-  auto payloadLength = length - 1; // 1 byte for type
+  const auto payload = data + 1;
+  const auto payloadLength = length - 1; // 1 byte for type
 
-  for (auto &handler : handlers)
+  if (!ConnectionManager::isConnected())
+  {
+    if (type == PacketType::CONNECT_REQUEST)
+      handleConnectRequest(payload, payloadLength);
+
+    return;
+  }
+
+  for (const auto &handler : handlers)
     if ((PacketType)pgm_read_byte(&handler.type) == type)
     {
       auto fn = (HandlerFn)pgm_read_word(&handler.fn);
