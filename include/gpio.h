@@ -27,10 +27,8 @@ public:
   static void playStartupChord();
   static void playErrorChord();
 
-  static bool checkRegisterState();
+  static bool isRegisterOpen();
+  static void checkRegisterState();
 
   static void openRegister();
-
-private:
-  static bool isRegisterOpen();
 };

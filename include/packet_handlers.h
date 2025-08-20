@@ -17,6 +17,7 @@ void handleSetDebug(const byte *payload, byte length);
 void handleOpenRegister(const byte *payload, byte length);
 
 constexpr PacketHandler handlers[] PROGMEM = {
+    {PacketType::START, handleStart},
     {PacketType::VERIFY_RESULT, handleVerifyResult},
     {PacketType::SET_DEBUG, handleSetDebug},
     {PacketType::OPEN_REGISTER, handleOpenRegister}};

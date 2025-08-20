@@ -15,7 +15,8 @@ void Gpio::init()
   digitalWrite(BUZZER_PIN, LOW);        // Ensure buzzer is off
   digitalWrite(REGISTER_OPEN_PIN, LOW); // Ensure register pin is low
 
-  checkRegisterState(); // Send the initial state of the register
+  lastPhysicalState = isRegisterOpen();
+  currentState = lastPhysicalState ? RegisterState::OPENED_EXTERNALLY : RegisterState::CLOSED;
 
   Logger::printLn("GPIO initialized.");
 }
@@ -60,12 +61,16 @@ void Gpio::playErrorChord()
   Logger::printLn("Error sound played.");
 }
 
-bool Gpio::checkRegisterState()
+bool Gpio::isRegisterOpen()
+{
+  return digitalRead(REGISTER_STATUS_PIN) == LOW;
+}
+
+void Gpio::checkRegisterState()
 {
   auto physicalState = isRegisterOpen();
-  auto stateChanged = physicalState != lastPhysicalState;
 
-  if (stateChanged)
+  if (physicalState != lastPhysicalState)
   {
     Logger::print("Physical register state changed: ");
     Logger::printLn(physicalState ? "OPEN" : "CLOSED");
@@ -89,8 +94,6 @@ bool Gpio::checkRegisterState()
     Logger::printLn("Warning: Register didn't open after command");
     currentState = RegisterState::CLOSED;
   }
-
-  return stateChanged;
 }
 
 void Gpio::openRegister()
@@ -102,9 +105,4 @@ void Gpio::openRegister()
   digitalWrite(REGISTER_OPEN_PIN, LOW);
 
   Logger::printLn("Register opened.");
-}
-
-bool Gpio::isRegisterOpen()
-{
-  return digitalRead(REGISTER_STATUS_PIN) == LOW;
 }

@@ -5,10 +5,22 @@
 #include "gpio.h"
 #include "logger.h"
 
+void handleStart(const byte *payload, byte length)
+{
+  if (length != 0)
+    return; // Invalid payload length
+
+  auto resPayload = static_cast<byte>(Gpio::isRegisterOpen());
+  Protocol::sendPacket(PacketType::HELLO, &resPayload, 1);
+
+  Logger::printLn("Playing startup chord...");
+  Gpio::playStartupChord();
+};
+
 void handleVerifyResult(const byte *payload, byte length)
 {
   if (length != 1)
-    return; // Invalid payload length
+    return;
 
   if (payload[0] != 0x01)
   {

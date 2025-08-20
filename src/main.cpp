@@ -15,8 +15,6 @@ void setup()
   while (!Serial)
     ;
 
-  Protocol::sendPacket(PacketType::HEARTBEAT);
-
   Logger::printLn("Starting NFC Reader...");
   NfcReader::init();
 
@@ -31,7 +29,7 @@ void loop()
   Protocol::handleIncomingSerial();
   HeartbeatManager::sendIfNeeded();
 
-  Gpio::checkRegisterState(); // Todo: Don't send when we initiate the open
+  Gpio::checkRegisterState();
 
   if (!NfcReader::checkForTag())
     return;
