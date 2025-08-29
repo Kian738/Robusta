@@ -9,9 +9,9 @@ bool ConnectionManager::debugMode = false;
 void ConnectionManager::setConnected(bool state)
 {
   if (state && !connected)
-    Logger::printLn("Connection established");
+    Logger::printLn("Connection established.");
   else if (!state && connected)
-    Logger::printLn("Connection lost");
+    Logger::printLn("Connection lost.");
 
   connected = state;
 }

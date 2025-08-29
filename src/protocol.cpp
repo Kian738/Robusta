@@ -58,9 +58,9 @@ void Protocol::parseByte(byte b)
     break;
 
   case ParseState::READ_LENGTH:
-    if (b < 2 || b >= MAX_PAYLOAD_SIZE)
+    if (b < 1 || b >= MAX_PAYLOAD_SIZE) // Min payload len is 1 byte for checksum
     {
-      parseState = ParseState::WAIT_HI; // Invalid length, reset
+      parseState = ParseState::WAIT_HI;
       return;
     }
     packetLength = b;

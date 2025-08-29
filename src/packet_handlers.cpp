@@ -65,6 +65,8 @@ void handleOpenRegister(const byte *payload, byte length)
   if (length != 0)
     return;
 
+  Logger::printLn("Opening register...");
+
   Gpio::beep();
   Gpio::openRegister();
 };
@@ -74,5 +76,5 @@ void handleHeartbeatAck(const byte *payload, byte length)
   if (length != 0)
     return;
 
-  HeartbeatManager::onHeartbeatAck();
+  HeartbeatManager::isWaitingForAck = false;
 };
